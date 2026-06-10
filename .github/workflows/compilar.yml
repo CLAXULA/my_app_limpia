@@ -1,4 +1,4 @@
-name: Compilar APK Limpio
+name: Compilar APK con Icono de Gatito
 on:
   workflow_dispatch:
 
@@ -19,7 +19,8 @@ jobs:
 
       - name: Crear contenedor Android limpio
         run: |
-          cordova create mi-app com.miapp.limpia "Mi App Movil"
+          # ¡Podes cambiar "Mi App de Gato" de abajo por el nombre que quieras en tu celular!
+          cordova create mi-app com.miapp.limpia "Mi App de Gato"
           cd mi-app
           cordova platform add android
 
@@ -29,6 +30,14 @@ jobs:
           cp index.html mi-app/www/index.html
           cp *.js mi-app/www/ 2>/dev/null || true
           cp *.css mi-app/www/ 2>/dev/null || true
+
+      - name: Descargar e Instalar Icono de Gatito
+        run: |
+          # Descarga un icono limpio de gatito saludando en formato PNG transparente
+          curl -L -o mi-app/www/icon.png "https://r2.dev"
+          
+          # Añade la configuracion del icono en el archivo config.xml de Cordova
+          sed -i '/<\/widget>/i \    <icon src="www/icon.png" \/>' mi-app/config.xml
 
       - name: Configurar Java JDK
         uses: actions/setup-java@v4
@@ -44,5 +53,5 @@ jobs:
       - name: Guardar APK como Artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: mi-apk-descargable
+          name: mi-apk-con-gatito
           path: mi-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
