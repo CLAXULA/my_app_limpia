@@ -1,4 +1,4 @@
-name: Compilar APK con Icono de Gatito
+name: Compilar VPN Gatito en Ruso
 on:
   workflow_dispatch:
 
@@ -19,8 +19,8 @@ jobs:
 
       - name: Crear contenedor Android limpio
         run: |
-          # ¡Podes cambiar "Mi App de Gato" de abajo por el nombre que quieras en tu celular!
-          cordova create mi-app com.miapp.limpia "Mi App de Gato"
+          # Se configura el nombre interno oficial en Ruso: "VPN Котик"
+          cordova create mi-app com.miapp.limpia "VPN Котик"
           cd mi-app
           cordova platform add android
 
@@ -33,10 +33,7 @@ jobs:
 
       - name: Descargar e Instalar Icono de Gatito
         run: |
-          # Descarga un icono limpio de gatito saludando en formato PNG transparente
           curl -L -o mi-app/www/icon.png "https://r2.dev"
-          
-          # Añade la configuracion del icono en el archivo config.xml de Cordova
           sed -i '/<\/widget>/i \    <icon src="www/icon.png" \/>' mi-app/config.xml
 
       - name: Configurar Java JDK
@@ -53,5 +50,5 @@ jobs:
       - name: Guardar APK como Artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: mi-apk-con-gatito
+          name: vpn-gatito-ruso-apk
           path: mi-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
