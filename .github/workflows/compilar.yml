@@ -19,8 +19,7 @@ jobs:
 
       - name: Crear contenedor Android limpio
         run: |
-          # Se configura el nombre interno oficial en Ruso: "VPN Котик"
-          cordova create mi-app com.miapp.limpia "VPN Котик"
+          cordova create mi-app com.miapp.limpia "VPNGatito"
           cd mi-app
           cordova platform add android
 
@@ -35,6 +34,12 @@ jobs:
         run: |
           curl -L -o mi-app/www/icon.png "https://r2.dev"
           sed -i '/<\/widget>/i \    <icon src="www/icon.png" \/>' mi-app/config.xml
+
+      - name: Forzar nombre en Ruso en recursos de Android
+        run: |
+          # Cambia el nombre de la app de forma interna y segura en la configuracion de Android
+          sed -i 's/name="app_name">VPNGatito<\/string>/name="app_name">VPN Котик<\/string>/g' mi-app/platforms/android/app/src/main/res/values/strings.xml
+          sed -i 's/name="launcher_name">VPNGatito<\/string>/name="launcher_name">VPN Котик<\/string>/g' mi-app/platforms/android/app/src/main/res/values/strings.xml
 
       - name: Configurar Java JDK
         uses: actions/setup-java@v4
