@@ -1,0 +1,48 @@
+name: Compilar APK Limpio
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar compilador Cordova
+        run: npm install -g cordova
+
+      - name: Crear contenedor Android limpio
+        run: |
+          cordova create mi-app com.miapp.limpia "Mi App Movil"
+          cd mi-app
+          cordova platform add android
+
+      - name: Inyectar tus archivos HTML
+        run: |
+          rm -rf mi-app/www/*
+          cp index.html mi-app/www/index.html
+          cp *.js mi-app/www/ 2>/dev/null || true
+          cp *.css mi-app/www/ 2>/dev/null || true
+
+      - name: Configurar Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Compilar APK final
+        run: |
+          cd mi-app
+          cordova build android --debug
+
+      - name: Guardar APK como Artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: mi-apk-descargable
+          path: mi-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
