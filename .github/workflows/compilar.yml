@@ -9,52 +9,49 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Instalar compilador Cordova
-        run: npm install -g cordova
-
-      - name: Crear contenedor Android Seguro
-        run: |
-          # Se crea la estructura usando nombres estrictamente ASCII para evitar el error de Gradle
-          cordova create mi-app com.miapp.limpia "VPNGatito"
-          cd mi-app
-          cordova platform add android
-
-      - name: Inyectar tus archivos HTML
-        run: |
-          rm -rf mi-app/www/*
-          cp index.html mi-app/www/index.html
-          cp *.js mi-app/www/ 2>/dev/null || true
-          cp *.css mi-app/www/ 2>/dev/null || true
-
-      - name: Descargar e Instalar Icono de Gatito
-        run: |
-          curl -L -o mi-app/www/icon.png "https://r2.dev"
-          sed -i '/<\/widget>/i \    <icon src="www/icon.png" \/>' mi-app/config.xml
-
-      - name: Forzar Nombre Ruso Mediante Localizacion Segura
-        run: |
-          # Creamos una carpeta de idioma por defecto (valores base de Android) que sobreescribe el string en UTF-8 limpio
-          mkdir -p mi-app/platforms/android/app/src/main/res/values
-          echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">VPN Котик</string><string name="launcher_name">VPN Котик</string></resources>' > mi-app/platforms/android/app/src/main/res/values/strings.xml
-
       - name: Configurar Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Compilar APK final
+      - name: Instalar Android WebView Template
         run: |
-          cd mi-app
-          cordova build android --debug
+          # Descarga una plantilla nativa de Android vacía y ultra-limpia para WebViews
+          curl -L -o template.zip "https://github.com"
+          unzip template.zip
+          mv Android-WebView-Template-master/* .
+
+      - name: Inyectar tus archivos HTML
+        run: |
+          # Reemplaza la web de la plantilla por tu index.html real
+          rm -rf app/src/main/assets/*
+          cp index.html app/src/main/assets/index.html
+          cp *.js app/src/main/assets/ 2>/dev/null || true
+          cp *.css app/src/main/assets/ 2>/dev/null || true
+
+      - name: Descargar e Instalar Icono de Gatito
+        run: |
+          # Descarga el icono del gatito en las carpetas de recursos de Android
+          curl -L -o app/src/main/res/mipmap-hdpi/ic_launcher.png "https://r2.dev"
+          curl -L -o app/src/main/res/mipmap-mdpi/ic_launcher.png "https://r2.dev"
+          curl -L -o app/src/main/res/mipmap-xhdpi/ic_launcher.png "https://r2.dev"
+          curl -L -o app/src/main/res/mipmap-xxhdpi/ic_launcher.png "https://r2.dev"
+
+      - name: Aplicar Nombre VPN Kotik en Ruso
+        run: |
+          # Sobreescribe el nombre de la app directamente en el archivo de recursos con codificacion UTF-8 segura
+          mkdir -p app/src/main/res/values
+          echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">VPN Котик</string></resources>' > app/src/main/res/values/strings.xml
+
+      - name: Otorgar permisos de ejecucion
+        run: chmod +x gradlew
+
+      - name: Compilar APK final con Gradle Oficial
+        run: ./gradlew assembleDebug
 
       - name: Guardar APK como Artefacto
         uses: actions/upload-artifact@v4
         with:
           name: vpn-gatito-ruso-apk
-          path: mi-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
