@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Котик-ключник 🐱</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --terminal-bg: #0d0d14;
+            --text: #e0d6f0;
+            --accent: #b388ff;
+            --accent-glow: #d1b3ff;
+            --green: #69f0ae;
+            --green-glow: #a5f7ce;
+            --red: #ff8a80;
+            --border: #2a2a3a;
+            --paw: #f8e0c0;
+            --kitty-nose: #ff9e9e;
+            --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 40px rgba(179, 136, 255, 0.3);
+            --radius: 22px;
+            --radius-sm: 14px;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+            --font-sans: 'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font-sans);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-font-smoothing: antialiased;
+            background-image:
+                radial-gradient(ellipse at 50% 30%, rgba(179, 136, 255, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse at 50% 80%, rgba(105, 240, 174, 0.05) 0%, transparent 60%);
+        }
+
+        .app-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            border-radius: 28px;
+            padding: 28px 24px 32px;
+            box-shadow: var(--shadow-soft), var(--shadow-glow);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            position: relative;
+            overflow: hidden;
+            animation: cardFloatIn 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+
+        @keyframes cardFloatIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .app-card::before {
+            content: '🐾';
+            position: absolute;
+            top: -18px;
+            right: -10px;
+            font-size: 70px;
+            opacity: 0.04;
+            pointer-events: none;
+            transform: rotate(25deg);
+        }
+        .app-card::after {
+            content: '🐾';
+            position: absolute;
+            bottom: 40px;
+            left: -20px;
+            font-size: 55px;
+            opacity: 0.03;
+            pointer-events: none;
+            transform: rotate(-15deg);
+        }
+
+        .kitty-pointer-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .kitty-emoji {
+            font-size: 52px;
+            line-height: 1;
+            animation: kittyBounce 2.4s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+            flex-shrink: 0;
+        }
+        .kitty-emoji:active { transform: scale(0.9); }
+        @keyframes kittyBounce {
+            0%, 100% { transform: translateY(0); }
+            15% { transform: translateY(-10px); }
+            30% { transform: translateY(0); }
+            45% { transform: translateY(-5px); }
+            55% { transform: translateY(0); }
+        }
+        .kitty-arrow {
+            font-size: 28px;
+            animation: arrowPulse 1.6s ease-in-out infinite;
+            color: var(--accent);
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 0.4; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(6px); }
+        }
+
+        .status-terminal {
+            background: var(--terminal-bg);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #c9b8f0;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 2;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.5s, box-shadow 0.5s;
+            word-break: break-word;
+            letter-spacing: 0.02em;
+        }
+        .status-terminal.success-glow {
+            border-color: var(--green);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 0 18px rgba(105, 240, 174, 0.2);
+        }
+        .status-terminal.error-glow {
+            border-color: var(--red);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 0 18px rgba(255, 138, 128, 0.2);
+        }
+        .terminal-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+            animation: iconSpin 3s linear infinite paused;
+        }
+        .terminal-icon.spinning { animation-play-state: running; }
+        @keyframes iconSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .terminal-text { flex: 1; line-height: 1.4; }
+
+        .server-counter {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: #7a6a9a;
+            text-align: center;
+            letter-spacing: 0.04em;
+            z-index: 2;
+            transition: color 0.4s;
+        }
+        .server-counter .count-number {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--accent);
+            transition: all 0.4s;
+        }
+        .server-counter .count-number.big {
+            font-size: 20px;
+            color: var(--green);
+            animation: popNumber 0.5s ease-out;
+        }
+        @keyframes popNumber {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-connect {
+            display: block;
+            width: 100%;
+            padding: 20px 16px;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            background: var(--accent);
+            color: #1a1a2e;
+            box-shadow: 0 8px 32px rgba(179, 136, 255, 0.35);
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            font-family: var(--font-sans);
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+        .btn-connect::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50px;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.15) 0%,
+                    transparent 50%,
+                    rgba(255, 255, 255, 0.05) 100%);
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .btn-connect:active {
+            transform: scale(0.94);
+            box-shadow: 0 4px 16px rgba(179, 136, 255, 0.5);
+        }
+        .btn-connect:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-connect.connected {
+            background: var(--green);
+            color: #0a2a18;
+            box-shadow: 0 8px 36px rgba(105, 240, 174, 0.45);
+            animation: connectedPulse 2s ease-in-out infinite;
+        }
+        @keyframes connectedPulse {
+            0%, 100% { box-shadow: 0 8px 36px rgba(105, 240, 174, 0.45); }
+            50% { box-shadow: 0 8px 52px rgba(105, 240, 174, 0.7); }
+        }
+        .btn-connect.connected::after { opacity: 0.6; }
+
+        .kitty-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            z-index: 2;
+            flex-wrap: wrap;
+            min-height: 48px;
+        }
+        .footer-kitty {
+            font-size: 32px;
+            transition: all 0.4s;
+            cursor: default;
+            animation: footerFloat 3s ease-in-out infinite;
+        }
+        .footer-kitty:nth-child(1) { animation-delay: 0s; }
+        .footer-kitty:nth-child(2) { animation-delay: 0.5s; }
+        .footer-kitty:nth-child(3) { animation-delay: 1s; }
+        .footer-kitty:nth-child(4) { animation-delay: 1.5s; }
+        .footer-kitty:nth-child(5) { animation-delay: 2s; }
+        @keyframes footerFloat {
+            0%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-7px); }
+            60% { transform: translateY(0); }
+        }
+        .footer-kitty.excited {
+            animation: excitedJump 0.5s ease-out;
+            font-size: 40px;
+        }
+        @keyframes excitedJump {
+            0% { transform: translateY(0) scale(1); }
+            30% { transform: translateY(-20px) scale(1.3); }
+            60% { transform: translateY(-5px) scale(0.95); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .footer-kitty.celebrate {
+            animation: celebrateSpin 0.7s ease-out;
+        }
+        @keyframes celebrateSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            40% { transform: rotate(25deg) scale(1.4); }
+            70% { transform: rotate(-10deg) scale(0.9); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        @media (max-width: 400px) {
+            .app-card { padding: 20px 14px 24px; border-radius: 22px; gap: 16px; }
+            .kitty-emoji { font-size: 40px; }
+            .kitty-arrow { font-size: 22px; }
+            .status-terminal { font-size: 12px; padding: 10px 12px; }
+            .btn-connect { font-size: 17px; padding: 16px 12px; }
+            .footer-kitty { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-card">
+        <div class="kitty-pointer-area">
+            <span class="kitty-emoji" id="kittyPointer" title="Нажми меня, чтобы подключиться! 🐱">🐱</span>
+            <span class="kitty-arrow">👉</span>
+        </div>
+
+        <div class="status-terminal" id="statusTerminal">
+            <span class="terminal-icon" id="terminalIcon">⏳</span>
+            <span class="terminal-text" id="terminalText">Получение серверов...</span>
+        </div>
+
+        <div class="server-counter">
+            Найдено серверов: <span class="count-number" id="serverCount">0</span>
+        </div>
+
+        <button class="btn-connect" id="btnConnect" disabled>🔄 Загрузка...</button>
+
+        <div class="kitty-footer" id="kittyFooter">
+            <span class="footer-kitty">😺</span>
+            <span class="footer-kitty">😸</span>
+            <span class="footer-kitty">😻</span>
+            <span class="footer-kitty">🐱</span>
+            <span class="footer-kitty">😽</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ──────────────────────────────────────────────
+            // 🔧 CONFIGURACIÓN
+            // ──────────────────────────────────────────────
+            const SERVERS_LIST_URL =
+                'https://raw.githubusercontent.com/usuario/repo/main/servers.txt';
+            // Reemplaza ↑ con tu URL real
+
+            // ──────────────────────────────────────────────
+            // 🛡️ SERVIDORES DE RESPALDO (fallback)
+            // ──────────────────────────────────────────────
+            const FALLBACK_SERVERS = [
+                'vless://d342d11e-d424-4583-b36e-524ab1f0afa4@example.com:443?encryption=none&security=tls&type=tcp&sni=example.com#Fallback-1',
+                'vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@vpn.example.org:8080?encryption=none&security=reality&type=grpc&serviceName=grpc&sni=discord.com#Fallback-2',
+                'vless://f0e1d2c3-b4a5-9687-8c9d-0e1f2a3b4c5d@104.26.0.1:443?encryption=none&security=tls&type=ws&host=cloudflare.net&path=%2Fws#Fallback-3',
+                'vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@speedtest.net:443?encryption=none&security=tls&type=tcp&sni=speedtest.net#Fallback-4'
+            ];
+
+            // ──────────────────────────────────────────────
+            // 🌐 ESTADO GLOBAL
+            // ──────────────────────────────────────────────
+            const state = {
+                allServers: [],
+                bestServer: null,
+                isConnected: false,
+                isConnecting: false,
+                currentConnectionServer: null,
+                failoverInProgress: false,
+                usingFallback: false,
+            };
+
+            // ──────────────────────────────────────────────
+            // 🎭 ELEMENTOS DEL DOM
+            // ──────────────────────────────────────────────
+            const dom = {
+                kittyPointer: document.getElementById('kittyPointer'),
+                statusTerminal: document.getElementById('statusTerminal'),
+                terminalIcon: document.getElementById('terminalIcon'),
+                terminalText: document.getElementById('terminalText'),
+                serverCount: document.getElementById('serverCount'),
+                btnConnect: document.getElementById('btnConnect'),
+                kittyFooter: document.getElementById('kittyFooter'),
+                footerKitties: document.querySelectorAll('.footer-kitty'),
+            };
+
+            // ──────────────────────────────────────────────
+            // 🐱 MENSAJES TIERNOS EN RUSO
+            // ──────────────────────────────────────────────
+            const messages = {
+                fetching: 'Получение серверов...',
+                serversFound: (n) => `Серверы найдены! Мяу~ (${n} шт.)`,
+                fallbackUsed: (n) => `Серверы найдены (запасные)! Мяу~ (${n} шт.)`,
+                testing: 'Тестирую лапкой... Подожди~ 🐾',
+                bestFound: (ms) => `Лучший сервер: ${ms}мс! Ура!`,
+                connecting: 'Подключаемся... Мур-мур~',
+                connected: 'Подключено! Ура! 😻',
+                disconnected: 'Отключено. Жду команду, котик.',
+                error: 'Ой, ошибка! Попробуем другой... 😿',
+                noServers: 'Серверов нет... Грустный котик 😿',
+                failover: 'Переключаю на запасной... Держись! 🐱',
+                ready: 'Готов к подключению! Жми лапкой~ 🐾',
+            };
+
+            // ──────────────────────────────────────────────
+            // 🖥️ ACTUALIZAR TERMINAL (solo lectura)
+            // ──────────────────────────────────────────────
+            function updateTerminal(text, icon = '⏳', glowClass = '') {
+                dom.terminalText.textContent = text;
+                dom.terminalIcon.textContent = icon;
+                dom.statusTerminal.classList.remove('success-glow', 'error-glow');
+                if (glowClass) {
+                    dom.statusTerminal.classList.add(glowClass);
+                }
+            }
+
+            function setTerminalSpinning(spin) {
+                if (spin) {
+                    dom.terminalIcon.classList.add('spinning');
+                } else {
+                    dom.terminalIcon.classList.remove('spinning');
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔢 ACTUALIZAR CONTADOR (solo número)
+            // ──────────────────────────────────────────────
+            function updateServerCount(count) {
+                const el = dom.serverCount;
+                el.textContent = count;
+                el.classList.add('big');
+                setTimeout(() => el.classList.remove('big'), 500);
+            }
+
+            // ──────────────────────────────────────────────
+            // 🎉 ANIMAR GATITOS DEL FOOTER
+            // ──────────────────────────────────────────────
+            function animateFooterKitties(animationClass) {
+                dom.footerKitties.forEach((kitty, i) => {
+                    setTimeout(() => {
+                        kitty.classList.add(animationClass);
+                        setTimeout(() => kitty.classList.remove(animationClass), 700);
+                    }, i * 80);
+                });
+            }
+
+            function updateKittyPointer(emoji) {
+                dom.kittyPointer.textContent = emoji;
+                dom.kittyPointer.style.animation = 'none';
+                void dom.kittyPointer.offsetWidth;
+                dom.kittyPointer.style.animation = '';
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔍 EXTRAER ENLACES vless:// (REGEX ROBUSTA)
+            // ──────────────────────────────────────────────
+            function extractVlessLinks(text) {
+                // Limpiar saltos de línea y espacios no deseados
+                const cleanText = text.replace(/\r/g, '').replace(/\n/g, ' ');
+                // Busca vless:// seguido de cualquier carácter que no sea espacio, comillas o <>
+                const regex = /vless:\/\/[^\s"'<>]+/gi;
+                const matches = cleanText.match(regex) || [];
+                // Eliminar duplicados
+                return [...new Set(matches)];
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔬 PARSEAR URL vless -> { url, host, port }
+            // ──────────────────────────────────────────────
+            function parseVlessLink(url) {
+                try {
+                    const atIndex = url.indexOf('@');
+                    if (atIndex === -1) return null;
+
+                    const afterAt = url.substring(atIndex + 1);
+                    const colonIndex = afterAt.indexOf(':');
+                    const questionIndex = afterAt.indexOf('?');
+                    const hashIndex = afterAt.indexOf('#');
+
+                    let host, portStr;
+
+                    if (colonIndex !== -1) {
+                        host = afterAt.substring(0, colonIndex);
+                        const portEnd = Math.min(
+                            questionIndex !== -1 ? questionIndex : afterAt.length,
+                            hashIndex !== -1 ? hashIndex : afterAt.length
+                        );
+                        portStr = afterAt.substring(colonIndex + 1, portEnd);
+                    } else {
+                        const hostEnd = Math.min(
+                            questionIndex !== -1 ? questionIndex : afterAt.length,
+                            hashIndex !== -1 ? hashIndex : afterAt.length
+                        );
+                        host = afterAt.substring(0, hostEnd);
+                        portStr = '443';
+                    }
+
+                    const port = parseInt(portStr, 10) || 443;
+
+                    if (!host || host.length < 2) return null;
+
+                    return {
+                        url: url.trim(),
+                        host: host.trim(),
+                        port: port,
+                        latency: Infinity,
+                    };
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🌍 FETCH DE SERVIDORES + FALLBACK
+            // ──────────────────────────────────────────────
+            async function fetchServers() {
+                updateTerminal(messages.fetching, '⏳');
+                setTerminalSpinning(true);
+                dom.btnConnect.disabled = true;
+                dom.btnConnect.textContent = '🔄 Загрузка...';
+                updateKittyPointer('🐱');
+                state.usingFallback = false;
+
+                let vlessLinks = [];
+
+                try {
+                    const response = await fetch(SERVERS_LIST_URL, {
+                        method: 'GET',
+                        headers: { 'Accept': 'text/plain' },
+                        signal: AbortSignal.timeout(15000),
+                    });
+
+                    if (response.ok) {
+                        const rawText = await response.text();
+                        vlessLinks = extractVlessLinks(rawText);
+                    }
+                } catch (err) {
+                    console.warn('Fetch fallido, usando servidores de respaldo:', err);
+                }
+
+                // Si no se obtuvieron enlaces, usar fallback
+                if (vlessLinks.length === 0) {
+                    console.log('Usando servidores de respaldo...');
+                    vlessLinks = FALLBACK_SERVERS;
+                    state.usingFallback = true;
+                }
+
+                // Parsear enlaces
+                state.allServers = vlessLinks.map(parseVlessLink).filter(Boolean);
+
+                if (state.allServers.length === 0) {
+                    // Si aún así no hay nada (muy raro), mostrar error
+                    updateTerminal(messages.noServers, '😿', 'error-glow');
+                    setTerminalSpinning(false);
+                    dom.btnConnect.disabled = true;
+                    dom.btnConnect.textContent = '😿 Нет серверов';
+                    updateServerCount(0);
+                    updateKittyPointer('😿');
+                    return;
+                }
+
+                updateServerCount(state.allServers.length);
+                const msg = state.usingFallback
+                    ? messages.fallbackUsed(state.allServers.length)
+                    : messages.serversFound(state.allServers.length);
+                updateTerminal(msg, '😸', 'success-glow');
+                setTerminalSpinning(false);
+                dom.btnConnect.disabled = false;
+                dom.btnConnect.textContent = '🚀 ПОДКЛЮЧИТЬ';
+                dom.btnConnect.classList.remove('connected');
+                state.isConnected = false;
+                updateKittyPointer('😸');
+                animateFooterKitties('excited');
+            }
+
+            // ──────────────────────────────────────────────
+            // ⚡ TEST DE LATENCIA (ping)
+            // ──────────────────────────────────────────────
+            async function pingServer(server, timeoutMs = 4000) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+                const startTime = performance.now();
+                try {
+                    await fetch(`https://${server.host}:${server.port}/`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal: controller.signal,
+                        cache: 'no-store',
+                    });
+                    const latency = Math.round(performance.now() - startTime);
+                    clearTimeout(timeoutId);
+                    return latency;
+                } catch (err) {
+                    clearTimeout(timeoutId);
+                    if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+                        return timeoutMs + 1000;
+                    }
+                    return timeoutMs + 2000;
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🏆 ENCONTRAR EL MEJOR SERVIDOR
+            // ──────────────────────────────────────────────
+            async function findBestServer() {
+                if (state.allServers.length === 0) return null;
+
+                updateTerminal(messages.testing, '⏳');
+                setTerminalSpinning(true);
+                updateKittyPointer('🐱');
+
+                const candidates = state.allServers.slice(0, 15);
+                const CONCURRENCY = 5;
+                const results = [];
+                let index = 0;
+
+                async function worker() {
+                    while (index < candidates.length) {
+                        const i = index++;
+                        const server = candidates[i];
+                        const latency = await pingServer(server, 4000);
+                        results.push({ server, latency });
+                    }
+                }
+
+                const workers = Array.from({ length: Math.min(CONCURRENCY, candidates.length) }, () =>
+                    worker()
+                );
+                await Promise.all(workers);
+
+                results.sort((a, b) => a.latency - b.latency);
+                for (const { server, latency } of results) {
+                    const orig = state.allServers.find(s => s.url === server.url);
+                    if (orig) orig.latency = latency;
+                }
+
+                const best = results[0];
+                if (best) {
+                    updateTerminal(messages.bestFound(best.latency), '⚡', 'success-glow');
+                    updateKittyPointer('😻');
+                } else {
+                    updateTerminal(messages.noServers, '😿', 'error-glow');
+                    updateKittyPointer('😿');
+                }
+
+                setTerminalSpinning(false);
+                return best ? best.server : null;
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔌 FUNCIÓN DE CONEXIÓN FINAL
+            // ──────────────────────────────────────────────
+            async function connectToServer(server) {
+                if (!server) return false;
+
+                updateTerminal(messages.connecting, '🔌');
+                setTerminalSpinning(true);
+                updateKittyPointer('🐱');
+                dom.btnConnect.disabled = true;
+                dom.btnConnect.textContent = '⏳ Подключение...';
+                state.isConnecting = true;
+
+                try {
+                    // ──────────────────────────────────────
+                    // 🧩 INTEGRACIÓN PLUGIN VPN NATIVO
+                    // Ejemplo: await VpnPlugin.connect({ ... });
+                    // ──────────────────────────────────────
+                    await new Promise((resolve, reject) => {
+                        const simDelay = 1800 + Math.random() * 1200;
+                        setTimeout(() => {
+                            if (Math.random() < 0.9) {
+                                resolve();
+                            } else {
+                                reject(new Error('Simulated VPN failure'));
+                            }
+                        }, simDelay);
+                    });
+
+                    state.isConnected = true;
+                    state.isConnecting = false;
+                    state.currentConnectionServer = server;
+                    state.bestServer = server;
+
+                    updateTerminal(messages.connected, '✅', 'success-glow');
+                    setTerminalSpinning(false);
+                    dom.btnConnect.disabled = false;
+                    dom.btnConnect.textContent = '✅ ПОДКЛЮЧЕНО';
+                    dom.btnConnect.classList.add('connected');
+                    updateKittyPointer('😻');
+                    animateFooterKitties('celebrate');
+
+                    startFailoverMonitor(server);
+                    return true;
+
+                } catch (err) {
+                    console.error('Connection error:', err);
+                    state.isConnecting = false;
+                    updateTerminal(messages.error, '❌', 'error-glow');
+                    setTerminalSpinning(false);
+                    updateKittyPointer('😿');
+                    dom.btnConnect.disabled = false;
+                    dom.btnConnect.textContent = '🔄 ПОВТОРИТЬ';
+                    dom.btnConnect.classList.remove('connected');
+                    state.isConnected = false;
+                    state.currentConnectionServer = null;
+                    return false;
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔄 FAILOVER AUTOMÁTICO
+            // ──────────────────────────────────────────────
+            let failoverInterval = null;
+
+            function startFailoverMonitor(currentServer) {
+                if (failoverInterval) clearInterval(failoverInterval);
+                failoverInterval = setInterval(async () => {
+                    if (!state.isConnected || state.failoverInProgress) return;
+
+                    const latency = await pingServer(currentServer, 3000);
+                    if (latency >= 4000) {
+                        state.failoverInProgress = true;
+                        updateTerminal(messages.failover, '🔄');
+                        setTerminalSpinning(true);
+                        updateKittyPointer('😿');
+
+                        const aliveServers = state.allServers
+                            .filter(s => s.url !== currentServer.url)
+                            .sort((a, b) => a.latency - b.latency);
+
+                        let reconnected = false;
+                        for (const candidate of aliveServers) {
+                            const lat = await pingServer(candidate, 3000);
+                            if (lat < 4000) {
+                                candidate.latency = lat;
+                                const success = await connectToServer(candidate);
+                                if (success) {
+                                    reconnected = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!reconnected) {
+                            updateTerminal(messages.noServers, '😿', 'error-glow');
+                            setTerminalSpinning(false);
+                            state.isConnected = false;
+                            state.currentConnectionServer = null;
+                            dom.btnConnect.disabled = false;
+                            dom.btnConnect.textContent = '🔄 ПОДКЛЮЧИТЬ';
+                            dom.btnConnect.classList.remove('connected');
+                            updateKittyPointer('😿');
+                            clearInterval(failoverInterval);
+                            failoverInterval = null;
+                        }
+                        state.failoverInProgress = false;
+                    }
+                }, 15000);
+            }
+
+            function stopFailoverMonitor() {
+                if (failoverInterval) {
+                    clearInterval(failoverInterval);
+                    failoverInterval = null;
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🔘 MANEJADOR DEL BOTÓN PRINCIPAL
+            // ──────────────────────────────────────────────
+            async function handleConnectClick() {
+                if (state.isConnecting) return;
+
+                if (state.isConnected) {
+                    stopFailoverMonitor();
+                    state.isConnected = false;
+                    state.currentConnectionServer = null;
+                    updateTerminal(messages.disconnected, '💤');
+                    setTerminalSpinning(false);
+                    dom.btnConnect.textContent = '🚀 ПОДКЛЮЧИТЬ';
+                    dom.btnConnect.classList.remove('connected');
+                    dom.btnConnect.disabled = false;
+                    updateKittyPointer('🐱');
+                    animateFooterKitties('excited');
+                    return;
+                }
+
+                if (state.allServers.length === 0) {
+                    await fetchServers();
+                    if (state.allServers.length === 0) return;
+                }
+
+                let targetServer = state.bestServer;
+                if (!targetServer || targetServer.latency === Infinity) {
+                    targetServer = await findBestServer();
+                }
+
+                if (!targetServer) {
+                    updateTerminal(messages.noServers, '😿', 'error-glow');
+                    updateKittyPointer('😿');
+                    dom.btnConnect.disabled = false;
+                    dom.btnConnect.textContent = '😿 Нет серверов';
+                    return;
+                }
+
+                state.bestServer = targetServer;
+                await connectToServer(targetServer);
+
+                if (!state.isConnected && state.allServers.length > 1) {
+                    updateTerminal(messages.failover, '🔄');
+                    setTerminalSpinning(true);
+                    const others = state.allServers
+                        .filter(s => s.url !== targetServer.url)
+                        .sort((a, b) => a.latency - b.latency);
+
+                    for (const candidate of others) {
+                        const lat = await pingServer(candidate, 3000);
+                        if (lat < 4000) {
+                            candidate.latency = lat;
+                            const ok = await connectToServer(candidate);
+                            if (ok) break;
+                        }
+                    }
+
+                    if (!state.isConnected) {
+                        updateTerminal(messages.noServers, '😿', 'error-glow');
+                        setTerminalSpinning(false);
+                        dom.btnConnect.disabled = false;
+                        dom.btnConnect.textContent = '🔄 ПОВТОРИТЬ';
+                        dom.btnConnect.classList.remove('connected');
+                        updateKittyPointer('😿');
+                    }
+                }
+            }
+
+            // ──────────────────────────────────────────────
+            // 🎬 INICIALIZACIÓN
+            // ──────────────────────────────────────────────
+            async function initApp() {
+                updateTerminal(messages.fetching, '⏳');
+                setTerminalSpinning(true);
+                updateKittyPointer('🐱');
+                dom.btnConnect.disabled = true;
+                dom.btnConnect.textContent = '🔄 Загрузка...';
+                dom.btnConnect.classList.remove('connected');
+                updateServerCount(0);
+                state.isConnected = false;
+                state.bestServer = null;
+                state.allServers = [];
+
+                await fetchServers();
+
+                if (state.allServers.length > 0) {
+                    await new Promise(r => setTimeout(r, 600));
+                    const best = await findBestServer();
+                    if (best) {
+                        state.bestServer = best;
+                        updateTerminal(messages.ready, '😸', 'success-glow');
+                        updateKittyPointer('😸');
+                        dom.btnConnect.textContent = '🚀 ПОДКЛЮЧИТЬ';
+                    }
+                }
+
+                setTerminalSpinning(false);
+                dom.btnConnect.disabled = (state.allServers.length === 0);
+                if (state.allServers.length === 0) {
+                    dom.btnConnect.textContent = '😿 Нет серверов';
+                }
+            }
+
+            dom.btnConnect.addEventListener('click', handleConnectClick);
+            dom.kittyPointer.addEventListener('click', () => {
+                if (!state.isConnecting && !state.isConnected) {
+                    handleConnectClick();
+                }
+            });
+            dom.kittyPointer.style.cursor = 'pointer';
+            dom.kittyPointer.title = 'Нажми меня, чтобы подключиться! 🐱';
+
+            initApp();
+
+            console.log('🐱 Котик-ключник готов! Мяу~');
+            console.log('🔁 Fallback automático activado si el fetch falla.');
+        })();
+    </script>
+</body>
+</html>
